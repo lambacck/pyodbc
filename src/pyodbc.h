@@ -44,7 +44,9 @@ typedef unsigned long long UINT64;
 #include <stringobject.h>
 #include <intobject.h>
 #include <floatobject.h>
+#ifndef PYPY_VERSION
 #include <longobject.h>
+#endif
 #include <boolobject.h>
 #include <bufferobject.h>
 #include <unicodeobject.h>

@@ -10,6 +10,10 @@
 #include "dbspecific.h"
 #include "sqlwchar.h"
 
+#ifdef PYPY_VERSION
+#include <math.h>
+#endif
+
 inline Connection* GetConnection(Cursor* cursor)
 {
     return (Connection*)cursor->cnxn;

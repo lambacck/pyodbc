@@ -959,7 +959,7 @@ initpyodbc()
         return;
 
     pModule = Py_InitModule4("pyodbc", pyodbc_methods, module_doc, NULL, PYTHON_API_VERSION);
-
+    Py_INCREF(pModule);
     if (!import_types())
         return;
 
