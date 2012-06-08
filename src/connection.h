@@ -24,7 +24,7 @@ struct Connection
 	HDBC hdbc;
 
     // Will be SQL_AUTOCOMMIT_ON or SQL_AUTOCOMMIT_OFF.
-    SQLUINTEGER nAutoCommit;
+    uintptr_t nAutoCommit;
 
     // The ODBC version the driver supports, from SQLGetInfo(DRIVER_ODBC_VER).  This is set after connecting.
     char odbc_major;
@@ -44,7 +44,7 @@ struct Connection
     bool unicode_results;
 
     // The connection timeout in seconds.
-    int timeout;
+    intptr_t timeout;
 
     // These are copied from cnxn info for performance and convenience.
 
@@ -65,12 +65,12 @@ struct Connection
 };
 
 #define Connection_Check(op) PyObject_TypeCheck(op, &ConnectionType)
-#define Connection_CheckExact(op) ((op)->ob_type == &ConnectionType)
+#define Connection_CheckExact(op) (Py_TYPE(op) == &ConnectionType)
 
 /*
  * Used by the module's connect function to create new connection objects.  If unable to connect to the database, an
  * exception is set and zero is returned.
  */
-PyObject* Connection_New(PyObject* pConnectString, bool fAutoCommit, bool fAnsi, bool fUnicodeResults, long timeout);
+PyObject* Connection_New(PyObject* pConnectString, bool fAutoCommit, bool fAnsi, bool fUnicodeResults, long timeout, bool fReadOnly);
 
 #endif

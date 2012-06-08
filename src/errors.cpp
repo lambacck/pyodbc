@@ -27,8 +27,7 @@ static const struct SqlStateMapping sql_state_mapping[] =
 };
 
 
-static PyObject*
-ExceptionFromSqlState(const char* sqlstate)
+static PyObject* ExceptionFromSqlState(const char* sqlstate)
 {
     // Returns the appropriate Python exception class given a SQLSTATE value.
 
@@ -42,8 +41,8 @@ ExceptionFromSqlState(const char* sqlstate)
     return Error;
 }
 
-PyObject*
-RaiseErrorV(const char* sqlstate, PyObject* exc_class, const char* format, ...)
+
+PyObject* RaiseErrorV(const char* sqlstate, PyObject* exc_class, const char* format, ...)
 {
     PyObject *pAttrs = 0, *pError = 0;
 
@@ -78,13 +77,21 @@ RaiseErrorV(const char* sqlstate, PyObject* exc_class, const char* format, ...)
         if (pError)
             RaiseErrorFromException(pError);
     }
-    
+
     Py_DECREF(pMsg);
     Py_XDECREF(pAttrs);
     Py_XDECREF(pError);
 
     return 0;
 }
+
+
+#if PY_MAJOR_VERSION < 3
+#define PyString_CompareWithASCIIString(lhs, rhs) _strcmpi(PyString_AS_STRING(lhs), rhs)
+#else
+#define PyString_CompareWithASCIIString PyUnicode_CompareWithASCIIString
+#endif
+
 
 bool HasSqlState(PyObject* ex, const char* szSqlState)
 {
@@ -100,9 +107,10 @@ bool HasSqlState(PyObject* ex, const char* szSqlState)
             PyObject* s = PySequence_GetItem(args, 1);
             if (s != 0 && PyString_Check(s))
             {
-                const char* sz = PyString_AsString(s);
-                if (sz && _strcmpi(sz, szSqlState) == 0)
-                    has = true;
+                // const char* sz = PyString_AsString(s);
+                // if (sz && _strcmpi(sz, szSqlState) == 0)
+                //     has = true;
+                has = (PyString_CompareWithASCIIString(s, szSqlState) == 0);
             }
             Py_XDECREF(s);
             Py_DECREF(args);
@@ -133,7 +141,7 @@ static PyObject* GetError(const char* sqlstate, PyObject* exc_class, PyObject* p
         Py_DECREF(pMsg);
         return 0;
     }
-    
+
     PyTuple_SetItem(pAttrs, 1, pMsg); // pAttrs now owns the pMsg reference; steals a reference, does not increment
 
     pSqlState = PyString_FromString(sqlstate);
@@ -142,7 +150,7 @@ static PyObject* GetError(const char* sqlstate, PyObject* exc_class, PyObject* p
         Py_DECREF(pAttrs);
         return 0;
     }
-    
+
     PyTuple_SetItem(pAttrs, 0, pSqlState); // pAttrs now owns the pSqlState reference
 
     pError = PyEval_CallObject(exc_class, pAttrs); // pError will incref pAttrs
@@ -151,6 +159,7 @@ static PyObject* GetError(const char* sqlstate, PyObject* exc_class, PyObject* p
 
     return pError;
 }
+
 
 static const char* DEFAULT_ERROR = "The driver did not supply an error!";
 
@@ -165,16 +174,17 @@ PyObject* RaiseErrorFromHandle(const char* szFunction, HDBC hdbc, HSTMT hstmt)
         RaiseErrorFromException(pError);
         Py_DECREF(pError);
     }
-        
+
     return 0;
 }
+
 
 PyObject* GetErrorFromHandle(const char* szFunction, HDBC hdbc, HSTMT hstmt)
 {
     TRACE("In RaiseError(%s)!\n", szFunction);
 
     // Creates and returns an exception from ODBC error information.
-    // 
+    //
     // ODBC can generate a chain of errors which we concatenate into one error message.  We use the SQLSTATE from the
     // first message, which seems to be the most detailed, to determine the class of exception.
     //
@@ -243,7 +253,7 @@ PyObject* GetErrorFromHandle(const char* szFunction, HDBC hdbc, HSTMT hstmt)
                 // the calling function name.
 
                 memcpy(sqlstate, sqlstateT, sizeof(sqlstate[0]) * _countof(sqlstate));
-                
+
                 pMsg = PyString_FromFormat("[%s] %s (%ld) (%s)", sqlstateT, szMsg, (long)nNativeError, szFunction);
                 if (pMsg == 0)
                     return 0;
@@ -285,6 +295,7 @@ PyObject* GetErrorFromHandle(const char* szFunction, HDBC hdbc, HSTMT hstmt)
     return GetError(sqlstate, 0, pMsg);
 }
 
+
 static bool GetSqlState(HSTMT hstmt, char* szSqlState)
 {
     SQLCHAR szMsg[300];
@@ -298,6 +309,7 @@ static bool GetSqlState(HSTMT hstmt, char* szSqlState)
     Py_END_ALLOW_THREADS
     return SQL_SUCCEEDED(ret);
 }
+
 
 bool HasSqlState(HSTMT hstmt, const char* szSqlState)
 {

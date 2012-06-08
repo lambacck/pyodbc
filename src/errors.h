@@ -51,13 +51,15 @@ bool HasSqlState(HSTMT hstmt, const char* szSqlState);
 
 inline PyObject* RaiseErrorFromException(PyObject* pError)
 {
-    #ifdef PYPY_VERSION
-    PyObject *cls = PyExceptionInstance_Class(pError);
-    #else
     // PyExceptionInstance_Class doesn't exist in 2.4
-	PyObject* cls = (PyObject*)((PyInstance_Check(pError) ? (PyObject*)((PyInstanceObject*)pError)->in_class : (PyObject*)(pError->ob_type)));
-    #endif
+#if PY_MAJOR_VERSION >= 3
+    PyErr_SetObject((PyObject*)Py_TYPE(pError), pError);
+#elif defined(PYPY_VERSION)
+    PyObject *cls = PyExceptionInstance_Class(pError);
+#else
+	PyObject* cls = (PyObject*)((PyInstance_Check(pError) ? (PyObject*)((PyInstanceObject*)pError)->in_class : (PyObject*)(Py_TYPE(pError))));
     PyErr_SetObject(cls, pError);
+#endif
     return 0;
 }
 

@@ -25,21 +25,14 @@ extern PyObject* IntegrityError;
 extern PyObject* DataError;
 extern PyObject* NotSupportedError;
 
-// Type objects such as 'int()'.
+extern PyObject* null_binary;
 
-extern PyObject* str_type;
-extern PyObject* float_type;
-extern PyObject* int_type;
-extern PyObject* buffer_type;
-extern PyObject* bool_type;
-extern PyObject* long_type;
 extern PyObject* decimal_type;
 
 inline bool PyDecimal_Check(PyObject* p)
 {
-    return p->ob_type == (_typeobject*)decimal_type;
+    return Py_TYPE(p) == (_typeobject*)decimal_type;
 }
-
 extern HENV henv;
 
 extern PyTypeObject RowType;
@@ -54,9 +47,6 @@ inline bool lowercase()
     return PyObject_GetAttrString(pModule, "lowercase") == Py_True;
 }
 
-extern char chDecimal;
-extern char chGroupSeparator;
-extern char chCurrencySymbol;
-
+extern Py_UNICODE chDecimal;
 
 #endif // _PYPGMODULE_H
